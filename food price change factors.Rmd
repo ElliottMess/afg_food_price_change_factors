@@ -1,0 +1,73 @@
+---
+title: "<center>Food price change factors in Afghanistan (2021)</center>"
+author: "<center>Amin Sherzad</center>"
+date: "<center> `r format(Sys.time(), '%d %B, %Y')` </center>"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+source("./market price vs covid.R")
+```
+
+R project folder on [github](https://github.com/sheramin/afg_food_price_change_factors)
+
+
+### Business task:
+Identify any relationship between food items price change and 1) COVID-19 cases, 2) Afghanistan government fall (in 2021)
+
+### Data Overview:
+All the datasets are downloaded from [HDX](https://data.humdata.org/), they are publicly available and expected they should already be cleaned and validated by organizations who own them.
+As per business task, we'd need two different datasets, 1) Afghanistan COVID-19 dataset, 2) Joing Market Monitoring Initiative (JMMI) dataset.
+
+Important! There was no data available for the month of March, 2021 in JMMI datasets, so that month is ignored.
+
+### Manipulation of datasets:
+Both datasets seem clean and publicly pubished. I just have done few modification to make it easier to deal with them.Please note, that all the modification except file renaming done by R coding, so it handles by itself - you don't need to worry.
+
+1) I've slightly renamed the file names, just changed the month from name to number, like January to 01, April to 04 and etc. (If you want to download the data directly from HDX, and feed it to script, you'd just need to rename the files as above OR change the script where it reads the data - that's it.)
+2) I've added Date information to JMMI data just to align it with COVID data and finally make it analyzable. The date information inserted as per file name.
+3) I've kept only food items in JMMI data as we only need them, and removed the other items.
+4) In two first months of JMMI data, the district names were not aligned with other months, so I've searched and found that information in the file itself and streamlined them. (all done via R coding, you don't need to worry about it)
+5) In JMMI data, changed the N/A to NA
+6) Added the collapse variable in the JMMI data, so to understand the pre and post fall of country (15th August recognizes as the country fall date). January to August is pre-fall, and August to December is post-fall.
+7) I've calculated the average of food price at national level and used it for visualizations.
+
+
+### Finding or summary of anlaysis:
+I've done some exploratory data analysis to better understand my datasets, then plotted them to see if there is any relationship between these two indicators. The findings show that there is quite obvious positive relationship between food price change and 1) COVID-19 cases, and 2) Taliban take over.
+
+### Supporting visualizations:
+```{r, echo=T}
+#To see if there is any relationship between food item price change and COVID cases change
+price_vs_covid %>% ggplot(aes(x = cases_avg, y = food_items_avg))+
+  geom_point()+
+  geom_smooth(method = 'lm', se = F)+
+  labs(title = "Relationship between COVID and food item price change", x = "COVID cases", y = "Food items average price(per kg)")
+
+#To see if there is any change in food item price in pre and post fall of country 
+price_vs_collapse %>% ggplot(aes(x = collapse, y = food_items_avg, fill = collapse))+
+  geom_bar(stat = 'identity', position = 'dodge')+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1))+
+  labs(title = "Collapse impact in Food item price", y = "Food items average price(per kg)", x = "Collapse")
+
+```
+
+
+### Test of significance:
+The relationship between food price change and COVID cases seems statistically significant. And it shows that almost 50% of the reason of food price change was the COVID-19 pandemic.
+
+```{r, echo=T}
+##Modeling
+#linear regression on food item price and COVID-19 cases 
+price_mod <- lm(cases_avg ~ food_items_avg, data = price_vs_covid)
+summary(price_mod)
+```
+
+
+
+
+
+
+

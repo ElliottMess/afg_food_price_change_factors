@@ -16,12 +16,26 @@ library(janitor) #for cleaning the datasets header
 
 ##Import data
 #important! I've slightly renamed the files after downloaded from HDX, in JMMI, just renamed the month from name to number, e.g: January as 01, April as 04, this is just to make my life easier when importing it.
-
+#E: you could use the  rhdx package to dowload the dataset from the API directly. It shows capacity to deal with APIs, which is saught after. 
 #link on HDX: https://data.humdata.org/dataset/afghanistan-covid-19-statistics-per-province
-covid_data <- read.csv("./input/market price data/covid data.csv", stringsAsFactors = F) %>% 
-  filter(Date != "#date")
+covid_data <- read.csv("./input/market price data/covid data.csv", stringsAsFactors = F) %>% # E: use read_csv to avoid stringsAsFactors
+  filter(Date != "#date") 
 
 #JMMI (Joint Market Monitoring Initiative) data
+
+
+#E: You have standardized files names, so you could use a purrr call to iterate over a list:
+market_price_data_files <- list.files("input/market price data/")
+price_per_item_files <- paste0("./input/market price data/",market_price_data_files[grep("copy-of-afg.*$", market_price_data_files)])
+price_per_item_dfs <- purrr::map_dfr(price_per_item_files, ~{
+  date <- str_replace(str_extract(.x, "[0-9]{2}_2021", "_", "-")
+  date
+  read_excel(.x, sheet = "Price per item - district") %>% 
+    select(c(afg_dist:tomatoes_price_cr_median)) %>% 
+    mutate(date = paste0(date, "-01")) %>% 
+    select(c(afg_dist:tomatoes_price_cr_median))
+})
+
 #link on HDX: https://data.humdata.org/dataset/joint-market-monitoring-initiative-jmmi-r
 jmmi_01 <- read_excel("./input/market price data/copy-of-afg_reach_cvwg_jmmi_01_2021.xlsx", sheet = "Price per item - district") %>% 
   select(c(afg_dist:tomatoes_price_cr_median))
